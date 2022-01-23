@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "ipfs": "^0.61.0",
+    "ipfs-http-client": "^55.0.0",
+    "mqtt": "^4.3.4"
+  }
+}
