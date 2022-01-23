@@ -29,8 +29,11 @@ ipfs_client.pubsub.subscribe(ipfs_topic, function(msg) {
   console.log(ipfs_message.message.data);
   if (ipfs_message.bridgeId !== bridgeId) {
     console.log("Recieved message from peer broker");
-    console.log("Informing current broker");
-    mqtt_client.publish(ipfs_message.topic, Buffer.alloc(ipfs_message.message.data));
+    console.log("Informing current broker: " + ipfs_message.topic);
+    buffer = new Buffer(ipfs_message.message.data);
+
+    console.log(buffer);
+    mqtt_client.publish(ipfs_message.topic, buffer);
   }
   console.log(new TextDecoder("utf-8").decode(msg.data));
 })
