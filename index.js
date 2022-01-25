@@ -72,7 +72,7 @@ mqtt_client.on('message', function (topic, message) {
 
   packet = {
     topic: topic.split('/')[2],
-    message: new Buffer(ipfs_signed_message),
+    message: Buffer.from(ipfs_signed_message),
     bridgeId: bridgeId
   }
   // recieve the message and publsih it on ipfs pubsub ipfs_topic
@@ -80,4 +80,5 @@ mqtt_client.on('message', function (topic, message) {
   // and password using to authenticate to mqtt for simplicity,
   // a more sophisticated use case can be established
   ipfs_client.pubsub.publish(ipfs_topic, Buffer.from(JSON.stringify(packet)));
+  mqtt_client.publish(topic.split('/')[2], message);
 })
