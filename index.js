@@ -63,8 +63,8 @@ mqtt_client.on('connect', function () {
 mqtt_client.on('message', function (topic, message) {
   base64_message = Buffer.from(message).toString('base64');
 
-  hashed_base64_message = crypto.createHash('sha256').update(base64_message);
-  signature = cipher.update(hashed_base64_message,  'utf8', 'hex').digest('hex');;
+  hashed_base64_message = crypto.createHash('sha256').update(base64_message).digest('hex');
+  signature = cipher.update(hashed_base64_message,  'utf8', 'hex');
   ipfs_signed_message = base64_message + "." + signature;
 
   packet = {
