@@ -3,25 +3,39 @@ const ipfs = require('ipfs')
 const ipfsClient = require('ipfs-http-client')
 const crypto = require('crypto')
 
-const username = 'ahmed';
-const password = 'ahmed';
-const bridgeId =  crypto.randomUUID();
+
+
+var args = process.argv
+
+console.log(args);
+//startAedes(args[2], args[3]);
+const username = args[2];
+const password = args[3];
+const bridgeId = crypto.randomUUID();
 console.log("Connecting ....");
-const mqtt_client  = mqtt.connect({
+
+const mqtt_client = mqtt.connect({
   host: 'localhost',
   port: '1883',
   username: username,
   password: password,
   clientId: bridgeId
 })
-ipfs_topic  = crypto.createHmac('sha256', username + ":" + password).digest('hex');
+ipfs_topic = crypto.createHmac('sha256', password)
+  .update(username)
+  .digest('hex');
 
+  ipfs_encryption_key =  crypto.createHmac('sha256', password)
+  .update(username)
+  .digest('hex');
+
+const cipher = crypto.createCipheriv('aes192', ipfs_encryption_key);
 
 const ipfs_client = ipfsClient.create({
-  host: "localhost", port:  "5001", protocol: 'http'
+  host: "localhost", port: "5001", protocol: 'http'
 })
 
-ipfs_client.pubsub.subscribe(ipfs_topic, function(msg) {
+ipfs_client.pubsub.subscribe(ipfs_topic, function (msg) {
   //Message recieve from remote queue or current queue
   // if message received from remote queue -> publish it here
   // if message recieve from current queue -> ignore
@@ -31,7 +45,6 @@ ipfs_client.pubsub.subscribe(ipfs_topic, function(msg) {
     console.log("Recieved message from peer broker");
     console.log("Informing current broker: " + ipfs_message.topic);
     buffer = new Buffer(ipfs_message.message.data);
-
     console.log(buffer);
     mqtt_client.publish(ipfs_message.topic, buffer);
   }
@@ -46,7 +59,10 @@ mqtt_client.on('connect', function () {
 })
 
 mqtt_client.on('message', function (topic, message) {
-  console.log(message.toString())
+  base64_message = buffer.from(message).toString('base64');
+  sign_message = crypto.createHash(cipher.update(base64_message,  'utf8', 'hex'));
+  ipfs_signed_message = base64_message + "." + sign_message;
+
   packet = {
     topic: topic,
     message: message,
