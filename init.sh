@@ -3,7 +3,7 @@
 echo "Installing mosquitto"
 apt install mosquitto -y
 mosquitto_passwd -c /etc/mosquitto/password_file $1
-#echo 'password_file /etc/mosquitto/password_file ' >> /etc/mosquitto/mosquitto.conf
+echo 'password_file /etc/mosquitto/password_file ' >> /etc/mosquitto/mosquitto.conf
 systemctl restart mosquitto.service
 
 echo "Installing IPFS"
