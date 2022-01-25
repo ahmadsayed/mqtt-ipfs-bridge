@@ -25,11 +25,12 @@ ipfs_topic = crypto.createHmac('sha256', password)
   .update(username)
   .digest('hex');
 
-  ipfs_encryption_key =  crypto.createHmac('sha256', password)
-  .update(username)
+ipfs_encryption_key =  crypto.createHmac('sha256', username)
+  .update(password)
   .digest('hex');
-
-const cipher = crypto.createCipheriv('aes192', ipfs_encryption_key);
+console.log(ipfs_topic);
+console.log(ipfs_encryption_key);
+const cipher = crypto.createCipher('aes192', ipfs_encryption_key);
 
 const ipfs_client = ipfsClient.create({
   host: "localhost", port: "5001", protocol: 'http'
@@ -46,12 +47,13 @@ ipfs_client.pubsub.subscribe(ipfs_topic, function (msg) {
     console.log("Informing current broker: " + ipfs_message.topic);
     buffer = new Buffer(ipfs_message.message.data);
     console.log(buffer);
-    mqtt_client.publish(ipfs_message.topic, buffer);
+    message = Buffer.from(buffer.split('.')[0]).toString('ascii');
+    mqtt_client.publish(ipfs_message.topic, message);
   }
   console.log(new TextDecoder("utf-8").decode(msg.data));
 })
 mqtt_client.on('connect', function () {
-  mqtt_client.subscribe('#', function (err) {
+  mqtt_client.subscribe('/ipfs/#', function (err) {
     if (!err) {
       console.log("subscription successful");
     }
@@ -59,13 +61,15 @@ mqtt_client.on('connect', function () {
 })
 
 mqtt_client.on('message', function (topic, message) {
-  base64_message = buffer.from(message).toString('base64');
-  sign_message = crypto.createHash(cipher.update(base64_message,  'utf8', 'hex'));
-  ipfs_signed_message = base64_message + "." + sign_message;
+  base64_message = Buffer.from(message).toString('base64');
+
+  hashed_base64_message = crypto.createHash('sha256').update(base64_message);
+  signature = cipher.update(hashed_base64_message,  'utf8', 'hex').digest('hex');;
+  ipfs_signed_message = base64_message + "." + signature;
 
   packet = {
-    topic: topic,
-    message: message,
+    topic: topic.split('/')[2],
+    message: new Buffer(ipfs_signed_message),
     bridgeId: bridgeId
   }
   // recieve the message and publsih it on ipfs pubsub ipfs_topic
